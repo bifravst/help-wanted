@@ -8,9 +8,6 @@ on:
     branches:
       - saga
 
-permissions:
-  issues: write
-
 jobs:
   update:
     runs-on: ubuntu-22.04
@@ -23,5 +20,5 @@ jobs:
           deno-version: v1.x
 
       - env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.LIST_ISSUES_TOKEN }}
         run: deno run -A list-issues.ts
