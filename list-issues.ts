@@ -2,7 +2,7 @@ import { Octokit } from "https://esm.sh/octokit?dts";
 
 // Create a personal access token at https://github.com/settings/tokens/new?scopes=repo
 const octokit = new Octokit({
-  auth: Deno.env.get("GH_TOKEN"),
+  auth: Deno.env.get("GITHUB_TOKEN"),
 });
 
 const repositories = [
