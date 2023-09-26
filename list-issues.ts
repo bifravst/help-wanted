@@ -15,6 +15,7 @@ const repositories = [
 const organizations = ["hello-nrfcloud", "bifravst"];
 
 for (const org of organizations) {
+  console.log(`Fetching organization ${org}...`);
   const repos = await octokit.rest.repos.listForOrg({
     org,
     type: "public",
@@ -35,6 +36,7 @@ const teams = [
 ];
 
 for (const [org, team] of teams) {
+  console.log(`Fetching team ${org}/${team}...`);
   const repos = await octokit.rest.teams.listReposInOrg({
     org,
     team_slug: team,
