@@ -93,6 +93,18 @@ for (const issue of helpWantedIssues
   issueMarkdown.push(`- ${issue.html_url}`);
 }
 
+// List of repos
+issueMarkdown.push(`## Repos`);
+issueMarkdown.push();
+issueMarkdown.push(
+  `The issues and PRs in the list above are sourced from these repositories:`
+);
+for (const { owner, repo } of repositories) {
+  issueMarkdown.push(
+    `- [@${owner}/${repo}](https://github.com/${owner}/${repo})`
+  );
+}
+
 await octokit.rest.issues.update({
   owner: "bifravst",
   repo: "help-wanted",
