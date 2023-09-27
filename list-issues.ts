@@ -1,5 +1,5 @@
 import { Octokit } from "https://esm.sh/octokit?dts";
-import { format } from "https://deno.land/std@0.202.0/datetime/mod.ts";
+import { formatDistanceToNow } from "npm:date-fns";
 
 // Create a personal access token at https://github.com/settings/tokens/new?scopes=repo
 const octokit = new Octokit({
@@ -10,12 +10,22 @@ const repositories = [
   {
     owner: "NordicPlayground",
     repo: "nrf-docker",
+    project: "other",
   },
 ];
 
-const organizations = ["hello-nrfcloud", "bifravst"];
+const organizations = [
+  {
+    name: "hello-nrfcloud",
+    project: "hello.nrfcloud.com",
+  },
+  {
+    name: "bifravst",
+    project: "other",
+  },
+];
 
-for (const org of organizations) {
+for (const { name: org, project } of organizations) {
   console.log(`Fetching organization ${org}...`);
   const repos = await octokit.rest.repos.listForOrg({
     org,
@@ -26,17 +36,18 @@ for (const org of organizations) {
     repositories.push({
       owner: org,
       repo: repo.name,
+      project,
     });
   }
 }
 
 const teams = [
-  ["NordicSemiconductor", "nrf-asset-tracker"],
-  ["NordicPlayground", "cellular-iot-applications"],
-  ["NordicPlayground", "thingy-world"],
+  ["NordicSemiconductor", "nrf-asset-tracker", "nRF Asset Tracker"],
+  ["NordicPlayground", "cellular-iot-applications", "other"],
+  ["NordicPlayground", "thingy-world", "world.thingy.rocks"],
 ];
 
-for (const [org, team] of teams) {
+for (const [org, team, project] of teams) {
   console.log(`Fetching team ${org}/${team}...`);
   const repos = await octokit.rest.teams.listReposInOrg({
     org,
@@ -48,13 +59,15 @@ for (const [org, team] of teams) {
     repositories.push({
       owner: org,
       repo: repo.name,
+      project,
     });
   }
 }
 
-const helpWantedIssues = [];
+type Issue = Record<string, any>;
+const helpWantedIssues: Record<string, Issue[]> = {};
 
-for (const { owner, repo } of repositories) {
+for (const { owner, repo, project } of repositories) {
   const issues = await octokit.rest.issues.listForRepo({
     owner,
     repo,
@@ -66,14 +79,12 @@ for (const { owner, repo } of repositories) {
       labels.find(({ name }) => name === "help wanted" && name !== "on hold") ||
       pull_request !== undefined
   )) {
-    helpWantedIssues.push(issue);
+    if (helpWantedIssues[project] === undefined) helpWantedIssues[project] = [];
+    helpWantedIssues[project].push(issue);
   }
 }
 
 const issueMarkdown = [];
-const getMonth = (date: Date): string => format(date, "yyyy-MM");
-
-let currentMonth = "";
 
 // Issues
 issueMarkdown.push(`## Issues`);
@@ -81,31 +92,42 @@ issueMarkdown.push();
 issueMarkdown.push(
   `Issues labeled with *help wanted*. Remove the *help wanted* label to not include them in this list.`
 );
-for (const issue of helpWantedIssues
-  .sort((a, b) => b.created_at.localeCompare(a.created_at))
-  .filter(({ pull_request }) => pull_request === undefined)) {
-  const issueMonth = getMonth(new Date(issue.created_at));
-  if (issueMonth !== currentMonth) {
-    issueMarkdown.push(`### ${issueMonth}`);
+for (const [project, issues] of Object.entries(helpWantedIssues)) {
+  issueMarkdown.push(`### ${project}`);
+  for (const issue of issues
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .filter(({ pull_request }) => pull_request === undefined)) {
+    const createdAt = new Date(issue.created_at);
+    issueMarkdown.push(
+      `- ${
+        issue.html_url
+      } (<time datetime="${createdAt.toISOString()}">${formatDistanceToNow(
+        createdAt,
+        { addSuffix: true }
+      )}</time>)`
+    );
   }
-  currentMonth = issueMonth;
-  issueMarkdown.push(`- ${issue.html_url}`);
 }
 
 // PRs
-currentMonth = "";
 issueMarkdown.push(`## PRs`);
 issueMarkdown.push();
 issueMarkdown.push(`Add the *on hold* label to not include them in this list.`);
-for (const issue of helpWantedIssues
-  .sort((a, b) => b.created_at.localeCompare(a.created_at))
-  .filter(({ pull_request }) => pull_request !== undefined)) {
-  const issueMonth = getMonth(new Date(issue.created_at));
-  if (issueMonth !== currentMonth) {
-    issueMarkdown.push(`### ${issueMonth}`);
+for (const [project, issues] of Object.entries(helpWantedIssues)) {
+  issueMarkdown.push(`### ${project}`);
+  for (const issue of issues
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .filter(({ pull_request }) => pull_request !== undefined)) {
+    const createdAt = new Date(issue.created_at);
+    issueMarkdown.push(
+      `- ${
+        issue.html_url
+      } (<time datetime="${createdAt.toISOString()}">${formatDistanceToNow(
+        createdAt,
+        { addSuffix: true }
+      )}</time>)`
+    );
   }
-  currentMonth = issueMonth;
-  issueMarkdown.push(`- ${issue.html_url}`);
 }
 
 // List of repos
