@@ -1,4 +1,5 @@
 import { Octokit } from "https://esm.sh/octokit?dts";
+import { format } from "https://deno.land/std@0.202.0/datetime/mod.ts";
 
 // Create a personal access token at https://github.com/settings/tokens/new?scopes=repo
 const octokit = new Octokit({
@@ -70,6 +71,9 @@ for (const { owner, repo } of repositories) {
 }
 
 const issueMarkdown = [];
+const getMonth = (date: Date): string => format(date, "yyyy-MM");
+
+let currentMonth = "";
 
 // Issues
 issueMarkdown.push(`## Issues`);
@@ -80,16 +84,27 @@ issueMarkdown.push(
 for (const issue of helpWantedIssues
   .sort((a, b) => b.created_at.localeCompare(a.created_at))
   .filter(({ pull_request }) => pull_request === undefined)) {
+  const issueMonth = getMonth(new Date(issue.created_at));
+  if (issueMonth !== currentMonth) {
+    issueMarkdown.push(`### ${issueMonth}`);
+  }
+  currentMonth = issueMonth;
   issueMarkdown.push(`- ${issue.html_url}`);
 }
 
 // PRs
+currentMonth = "";
 issueMarkdown.push(`## PRs`);
 issueMarkdown.push();
 issueMarkdown.push(`Add the *on hold* label to not include them in this list.`);
 for (const issue of helpWantedIssues
   .sort((a, b) => b.created_at.localeCompare(a.created_at))
   .filter(({ pull_request }) => pull_request !== undefined)) {
+  const issueMonth = getMonth(new Date(issue.created_at));
+  if (issueMonth !== currentMonth) {
+    issueMarkdown.push(`### ${issueMonth}`);
+  }
+  currentMonth = issueMonth;
   issueMarkdown.push(`- ${issue.html_url}`);
 }
 
