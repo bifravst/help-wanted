@@ -113,3 +113,5 @@ await octokit.rest.issues.update({
 });
 
 console.log(issueMarkdown.join(`\n`));
+
+Deno.exit(0);
