@@ -6,13 +6,25 @@ const octokit = new Octokit({
   auth: Deno.env.get("GITHUB_TOKEN"),
 });
 
-const repositories = [
+type Repos = { owner: string; repo: string; project: string }[];
+const repositories: Repos = [
   {
     owner: "NordicPlayground",
     repo: "nrf-docker",
     project: "other",
   },
 ];
+
+const unique = (repos: Repos): Repos =>
+  repos.reduce((unique, repo) => {
+    if (
+      unique.find(
+        (r) => `${r.owner}/${r.repo}` === `${repo.owner}/${repo.repo}`
+      ) === undefined
+    )
+      unique.push(repo);
+    return unique;
+  }, [] as Repos);
 
 const organizations = [
   {
@@ -67,7 +79,7 @@ for (const [org, team, project] of teams) {
 type Issue = Record<string, any>;
 const helpWantedIssues: Record<string, Issue[]> = {};
 
-for (const { owner, repo, project } of repositories) {
+for (const { owner, repo, project } of unique(repositories)) {
   const issues = await octokit.rest.issues.listForRepo({
     owner,
     repo,
@@ -136,7 +148,7 @@ issueMarkdown.push();
 issueMarkdown.push(
   `The issues and PRs in the list above are sourced from these repositories:`
 );
-for (const { owner, repo } of repositories) {
+for (const { owner, repo } of unique(repositories)) {
   issueMarkdown.push(
     `- [@${owner}/${repo}](https://github.com/${owner}/${repo})`
   );
