@@ -64,6 +64,7 @@ for (const [org, team, project] of teams) {
   const repos = await octokit.rest.teams.listReposInOrg({
     org,
     team_slug: team,
+    per_page: 100,
   });
   for (const repo of repos.data
     .filter(({ archived }) => !archived)
