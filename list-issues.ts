@@ -130,7 +130,8 @@ for (const [project, issues] of Object.entries(helpWantedIssues)) {
   issueMarkdown.push(`### ${project}`);
   for (const issue of issues
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .filter(({ pull_request }) => pull_request !== undefined)) {
+    .filter(({ pull_request }) => pull_request !== undefined)
+    .filter(({ draft }) => (draft ?? false) === false)) {
     const createdAt = new Date(issue.created_at);
     issueMarkdown.push(
       `- ${
