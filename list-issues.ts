@@ -56,6 +56,7 @@ for (const { name: org, project } of organizations) {
 const teams = [
   ["NordicSemiconductor", "nrf-asset-tracker", "nRF Asset Tracker"],
   ["NordicPlayground", "cellular-iot-applications", "other"],
+  ["NordicSemiconductor", "cellular-iot-applications-cloud-squad", "other"],
   ["NordicPlayground", "thingy-world", "world.thingy.rocks"],
 ];
 
