@@ -88,11 +88,7 @@ for (const { owner, repo, project } of unique(repositories)) {
     state: "open",
     per_page: 100,
   });
-  for (const issue of issues.data.filter(
-    ({ labels, pull_request }) =>
-      labels.find(({ name }) => name === "help wanted" && name !== "on hold") ||
-      pull_request !== undefined
-  )) {
+  for (const issue of issues.data) {
     if (helpWantedIssues[project] === undefined) helpWantedIssues[project] = [];
     helpWantedIssues[project].push(issue);
   }
@@ -110,7 +106,12 @@ for (const [project, issues] of Object.entries(helpWantedIssues)) {
   issueMarkdown.push(`### ${project}`);
   for (const issue of issues
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .filter(({ pull_request }) => pull_request === undefined)) {
+    // Not a PR
+    .filter(({ pull_request }) => pull_request === undefined)
+    // help wanted
+    .filter(({ labels }) =>
+      labels.find(({ name }) => name === "help wanted")
+    )) {
     const createdAt = new Date(issue.created_at);
     issueMarkdown.push(
       `- ${
@@ -126,16 +127,24 @@ for (const [project, issues] of Object.entries(helpWantedIssues)) {
 // PRs
 issueMarkdown.push(`## PRs`);
 issueMarkdown.push();
-issueMarkdown.push(`Add the *on hold* label to not include them in this list.`);
+issueMarkdown.push(
+  `Add the *help wanted* label a PR to add them to this list.`
+);
 for (const [project, issues] of Object.entries(helpWantedIssues)) {
   issueMarkdown.push(`### ${project}`);
   for (const issue of issues
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .filter(({ pull_request }) => pull_request !== undefined)
-    .filter(({ draft }) => (draft ?? false) === false)) {
+    .filter(({ draft }) => (draft ?? false) === false)
+    // help wanted, or renovate
+    .filter(
+      ({ labels, user }) =>
+        labels.find(({ name }) => name === "help wanted") !== undefined ||
+        user.login === "renovate[bot]"
+    )) {
     const createdAt = new Date(issue.created_at);
     issueMarkdown.push(
-      `- ${
+      `- ${issue.user.login === "renovate[bot]" ? ":package: " : ""}${
         issue.html_url
       } (<time datetime="${createdAt.toISOString()}">${formatDistanceToNow(
         createdAt,
