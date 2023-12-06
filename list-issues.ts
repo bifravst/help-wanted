@@ -128,11 +128,13 @@ for (const [project, issues] of Object.entries(helpWantedIssues)) {
 issueMarkdown.push(`## PRs`);
 issueMarkdown.push();
 issueMarkdown.push(
-  `Add the *help wanted* label a PR to add them to this list.`
+  "Add the `help wanted` label a PR to add them to this list."
+);
+issueMarkdown.push(
+  "Add the `on hold` label a PR to remove them from the list. This has precedence over `help wanted`."
 );
 for (const [project, issues] of Object.entries(helpWantedIssues)) {
-  issueMarkdown.push(`### ${project}`);
-  for (const issue of issues
+  const prsToShow = issues
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .filter(({ pull_request }) => pull_request !== undefined)
     .filter(({ draft }) => (draft ?? false) === false)
@@ -141,7 +143,20 @@ for (const [project, issues] of Object.entries(helpWantedIssues)) {
       ({ labels, user }) =>
         labels.find(({ name }) => name === "help wanted") !== undefined ||
         user.login === "renovate[bot]"
-    )) {
+    )
+    // on hold
+    .filter(({ labels, user }) =>
+      labels.find(({ name }) => name === "on hold") !== undefined ? false : true
+    );
+
+  issueMarkdown.push(`### ${project}`);
+
+  if (prsToShow.length === 0) {
+    issueMarkdown.push(`No PRs to help with.`);
+    continue;
+  }
+
+  for (const issue of prsToShow) {
     const createdAt = new Date(issue.created_at);
     issueMarkdown.push(
       `- ${issue.user.login === "renovate[bot]" ? ":package: " : ""}${
