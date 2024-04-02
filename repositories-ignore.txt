@@ -1,0 +1,2 @@
+# Contains the list of repositories to ignore
+hello-nrfcloud/nrfcloud-application-protocols

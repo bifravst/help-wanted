@@ -1,13 +1,13 @@
 import { Octokit } from "https://esm.sh/octokit?dts";
 import { formatDistanceToNow } from "npm:date-fns";
+import { isIgnored } from "./isIgnored.ts";
 
 // Create a personal access token at https://github.com/settings/tokens/new?scopes=repo
 const octokit = new Octokit({
   auth: Deno.env.get("GITHUB_TOKEN"),
 });
 
-type Repos = { owner: string; repo: string; project: string }[];
-const repositories: Repos = [
+let repositories: Repos = [
   {
     owner: "NordicPlayground",
     repo: "nrf-docker",
@@ -93,9 +93,14 @@ for (const [org, team, project] of teams) {
   }
 }
 
+// Make unique
+repositories = unique(repositories);
+// Remove ignores
+repositories = repositories.filter(isIgnored);
+
 const helpWantedIssues: Record<string, Issue[]> = {};
 
-for (const { owner, repo, project } of unique(repositories)) {
+for (const { owner, repo, project } of repositories) {
   const issues = await octokit.rest.issues.listForRepo({
     owner,
     repo,
