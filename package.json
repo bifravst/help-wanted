@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "cat": "*",
+    "package.json": "*"
+  },
+  "peerDependencies": {
+    "cat": "^0.2.0",
+    "package.json": "^2.0.1"
+  }
+}
